@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -83,6 +84,8 @@ public class MainGameManager : MonoBehaviour
     [SerializeField] private int roundsToWin;
     [SerializeField] private Image gameBorder;
 
+    private bool isMiniBoss;
+
     private void Awake()
     {
         if(_instance == null) _instance = this;
@@ -135,11 +138,28 @@ public class MainGameManager : MonoBehaviour
     private IEnumerator LoadNextGame()
     {
         yield return new WaitForSeconds(.1f);
+        isMiniBoss = false;
         var nextGame = GetNextGame();
         var sceneName = nextGame.name;
         AsyncOperation scene = SceneManager.LoadSceneAsync(nextGame.id);
         scene.allowSceneActivation = false;
         SetImpactText(sceneName);
+        yield return new WaitForSeconds(ShortTime - halfBeat - .31f);
+        OnGrowMainScene();
+        ImpactWord.instance.HandleImpactText();
+        yield return new WaitForSeconds(.21f);
+        scene.allowSceneActivation = true;
+        gameBorder.enabled = true;
+        LevelPreview.instance.HandleLevelPreview(true);
+        
+    }
+    private IEnumerator LoadMiniBoss()
+    {
+        yield return new WaitForSeconds(.1f);
+        isMiniBoss = true;
+        AsyncOperation scene = SceneManager.LoadSceneAsync("MiniBoss");
+        scene.allowSceneActivation = false;
+        SetImpactText("MINIBOSS TIME!!");
         yield return new WaitForSeconds(ShortTime - halfBeat - .31f);
         OnGrowMainScene();
         ImpactWord.instance.HandleImpactText();
@@ -184,6 +204,11 @@ public class MainGameManager : MonoBehaviour
         yield return new WaitForSeconds(halfBeat);
         
         if (!minigame.gameWin) remainingLives -= 1;
+        else if (isMiniBoss && minigame.gameWin)
+        {
+            remainingLives += 1;
+            if (remainingLives > StartingLives) remainingLives = StartingLives;
+        } 
         roundNumber++;
         gameBorder.enabled = false;
         scene.allowSceneActivation = true;
@@ -193,6 +218,12 @@ public class MainGameManager : MonoBehaviour
         {
             yield return null;
             OnGameOver();
+        }
+        //Miniboss
+        else if (roundNumber == (roundsToWin + 1) / 2)
+        {
+            OnMainStart(minigame.gameWin);
+            StartCoroutine(LoadMiniBoss());
         }
         else if (roundNumber <= roundsToWin)
         {
