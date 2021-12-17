@@ -286,7 +286,7 @@ MonoBehaviour:
   roundNumber: 0
   remainingLives: 3
   startWaitTime: 3
-  indexOffset: 3
+  indexOffset: 4
   roundsToWin: 5
   gameBorder: {fileID: 6753492707297013645}
 --- !u!1 &3256082928554374614
